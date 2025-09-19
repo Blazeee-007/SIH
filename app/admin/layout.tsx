@@ -1,0 +1,22 @@
+"use client"
+
+import type React from "react"
+import { AppLayout } from "@/components/layout/app-layout"
+import { ProtectedRoute } from "@/components/auth/protected-route"
+import { useAuth } from "@/lib/auth-context"
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const { user } = useAuth()
+
+  return (
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AppLayout userRole={user?.role || "admin"} userName={user?.name || "Administrator"}>
+        {children}
+      </AppLayout>
+    </ProtectedRoute>
+  )
+}
