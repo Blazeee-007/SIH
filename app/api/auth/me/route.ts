@@ -1,12 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { verifyToken, getUserById } from "@/lib/auth"
+import { verifyToken } from "@/lib/auth"
+import { getUserById } from "@/lib/services/userService"
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get("auth-token")?.value
+    const authHeader = request.headers.get("authorization")
+    const token = authHeader?.replace("Bearer ", "") || request.cookies.get("auth-token")?.value
 
     if (!token) {
-      return NextResponse.json({ error: "No token provided" }, { status: 401 })
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
     const payload = await verifyToken(token)
@@ -14,22 +16,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 })
     }
 
-    // Get user data
-    const user = getUserById(payload.userId)
+    const user = await getUserById(payload.userId)
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
     return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
+      success: true,
+      user,
     })
   } catch (error) {
-    console.error("Auth verification error:", error)
+    console.error("Get user error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
